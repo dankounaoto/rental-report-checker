@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>収支レポートチェッカー</title>
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f5f7fa;
+      color: #222;
+    }
+
+    .container {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 50px 20px;
+    }
+
+    h1 {
+      margin-bottom: 8px;
+      font-size: 30px;
+    }
+
+    .lead {
+      color: #666;
+      margin-bottom: 32px;
+      line-height: 1.7;
+    }
+
+    .card {
+      background: white;
+      border-radius: 14px;
+      padding: 24px;
+      margin-bottom: 20px;
+      box-shadow: 0 3px 14px rgba(0,0,0,.06);
+    }
+
+    label {
+      display: block;
+      font-weight: bold;
+      margin: 18px 0 7px;
+    }
+
+    input {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ccd2da;
+      border-radius: 8px;
+      font-size: 16px;
+    }
+
+    button {
+      width: 100%;
+      margin-top: 24px;
+      padding: 14px;
+      border: 0;
+      border-radius: 9px;
+      background: #222;
+      color: white;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button:hover {
+      opacity: .85;
+    }
+
+    #result {
+      display: none;
+    }
+
+    .alert {
+      padding: 13px;
+      margin-top: 10px;
+      border-radius: 8px;
+      background: #fff3cd;
+    }
+
+    .ok {
+      background: #e7f6ec;
+    }
+
+    .amount {
+      font-size: 22px;
+      font-weight: bold;
+    }
+
+    .note {
+      font-size: 13px;
+      color: #777;
+      margin-top: 24px;
+    }
+  </style>
+</head>
+
+<body>
+<div class="container">
+
+  <h1>収支レポートチェッカー</h1>
+
+  <p class="lead">
+    管理会社から届いた今月の収支を入力すると、
+    前月との差から「確認した方がいい項目」を自動でチェックします。
+  </p>
+
+  <div class="card">
+    <h2>前月</h2>
+
+    <label>家賃収入</label>
+    <input id="prevRent" type="number" value="200000">
+
+    <label>管理費・手数料</label>
+    <input id="prevFee" type="number" value="10000">
+
+    <label>修繕・その他費用</label>
+    <input id="prevOther" type="number" value="0">
+  </div>
+
+  <div class="card">
+    <h2>今月</h2>
+
+    <label>家賃収入</label>
+    <input id="nowRent" type="number" value="180000">
+
+    <label>管理費・手数料</label>
+    <input id="nowFee" type="number" value="12000">
+
+    <label>修繕・その他費用</label>
+    <input id="nowOther" type="number" value="35000">
+
+    <button onclick="checkReport()">今月の収支をチェック</button>
+  </div>
+
+  <div id="result" class="card">
+    <h2>チェック結果</h2>
+    <div id="summary"></div>
+    <div id="alerts"></div>
+  </div>
+
+</div>
+
+<script>
+function yen(value) {
+  return Number(value).toLocaleString("ja-JP") + "円";
+}
+
+function getValue(id) {
+  return Number(document.getElementById(id).value) || 0;
+}
+
+function checkReport() {
+
+  const prevRent = getValue("prevRent");
+  const prevFee = getValue("prevFee");
+  const prevOther = getValue("prevOther");
+
+  const nowRent = getValue("nowRent");
+  const nowFee = getValue("nowFee");
+  const nowOther = getValue("nowOther");
+
+  const prevProfit = prevRent - prevFee - prevOther;
+  const nowProfit = nowRent - nowFee - nowOther;
+
+  const alerts = [];
+
+  if (nowRent < prevRent) {
+    alerts.push(
+      "家賃収入が前月より " +
+      yen(prevRent - nowRent) +
+      " 減少しています。未入金・退去・減額などを確認してください。"
+    );
+  }
+
+  if (nowFee > prevFee) {
+    alerts.push(
+      "管理費・手数料が前月より " +
+      yen(nowFee - prevFee) +
+      " 増加しています。"
+    );
+  }
+
+  if (nowOther > prevOther) {
+    alerts.push(
+      "修繕・その他費用が前月より " +
+      yen(nowOther - prevOther) +
+      " 増加しています。費用の内訳を確認してください。"
+    );
+  }
+
+  if (nowProfit < prevProfit) {
+    alerts.push(
+      "最終的な手残りが前月より " +
+      yen(prevProfit - nowProfit) +
+      " 減少しています。"
+    );
+  }
+
+  document.getElementById("summary").innerHTML =
+    "<p>今月の手残り</p>" +
+    "<div class='amount'>" + yen(nowProfit) + "</div>" +
+    "<p>前月：" + yen(prevProfit) + "</p>";
+
+  const alertBox = document.getElementById("alerts");
+
+  if (alerts.length === 0) {
+    alertBox.innerHTML =
+      "<div class='alert ok'>大きな変化は検出されませんでした。</div>";
+  } else {
+    alertBox.innerHTML =
+      alerts.map(a => "<div class='alert'>" + a + "</div>").join("");
+  }
+
+  document.getElementById("result").style.display = "block";
+}
+</script>
+
+</body>
+</html>
